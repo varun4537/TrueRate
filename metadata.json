@@ -1,0 +1,5 @@
+{
+  "name": "TrueRate: Wilson Score Calculator",
+  "description": "A statistical tool to compare product ratings fairly by accounting for review counts using the Wilson Score Interval.",
+  "requestFramePermissions": []
+}
