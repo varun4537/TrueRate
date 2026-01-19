@@ -158,88 +158,86 @@ const App: React.FC = () => {
         >
           
           {/* Verdict Card */}
-          <div className={`glass-panel rounded-3xl p-6 shadow-floating relative overflow-visible group transition-all duration-500 ${isCalculated ? 'ring-2 ring-brand-secondary/50 scale-[1.01]' : ''}`}>
+          <div className={`glass-panel rounded-3xl p-5 shadow-floating relative overflow-visible group transition-all duration-500 ${isCalculated ? 'ring-2 ring-brand-secondary/50 scale-[1.01]' : ''}`}>
              
              {/* Dynamic Status Bar */}
              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary to-brand-accent rounded-t-3xl opacity-0 transition-opacity duration-300" style={{ opacity: isCalculated ? 1 : 0 }}></div>
 
              {isAllValid ? (
                winner ? (
-                 <div className="relative z-10 flex flex-col h-full">
+                 <div className="relative z-10 flex flex-col">
                    {/* Header */}
-                   <div className="flex items-center justify-between mb-4">
+                   <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold tracking-wider text-neutral-400 uppercase">Analysis Verdict</span>
-                        <div className="h-px w-8 bg-neutral-200"></div>
+                        <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">Analysis Verdict</span>
+                        <div className="h-px w-6 bg-neutral-200"></div>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide transition-colors duration-500 ${isCalculated ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
-                        {isCalculated ? 'Live Data' : 'Cached'}
+                        {isCalculated ? 'Live' : 'Cached'}
                       </span>
                    </div>
                    
-                   {/* Winner Header - Simplified */}
-                   <div className="flex flex-col mb-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${winner.id === 'A' ? 'bg-brand-primary text-white' : 'bg-brand-accent text-white'}`}>
-                           Winner
-                        </div>
+                   {/* Winner Header - Compact Layout */}
+                   <div className="flex items-center gap-3 mb-3">
+                      <div className={`shrink-0 p-2.5 rounded-xl shadow-sm transition-transform duration-500 ${isCalculated ? 'scale-110 rotate-3' : ''} ${winner.id === 'A' ? 'bg-brand-primary text-white' : 'bg-brand-accent text-white'}`}>
+                         <Trophy className="w-5 h-5" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className={`shrink-0 p-3 rounded-2xl shadow-sm transition-transform duration-500 ${isCalculated ? 'scale-110 rotate-3' : ''} ${winner.id === 'A' ? 'bg-brand-primary text-white' : 'bg-brand-accent text-white'}`}>
-                           <Trophy className="w-8 h-8" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                           <span className="text-lg font-bold text-neutral-900 leading-tight truncate">
+                             {winner.name || `Product ${winner.id}`}
+                           </span>
+                           <div className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${winner.id === 'A' ? 'bg-brand-primary/10 text-brand-primary' : 'bg-brand-accent/10 text-brand-accent'}`}>
+                             Winner
+                           </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-neutral-900 leading-none truncate">
-                          {winner.name || `Product ${winner.id}`}
-                        </h2>
+                        <p className="text-xs text-neutral-500 leading-tight">
+                          Statistically safer choice based on data volume.
+                        </p>
                       </div>
                    </div>
 
-                   {/* Simple Summary */}
-                   <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
-                     Based on the rating consistency and volume of reviews, <strong>{winner.name}</strong> is the statistically safer choice.
-                   </p>
-
-                   {/* Analysis Toggle */}
+                   {/* Analysis Toggle - Integrated with Header/Summary */}
                    <button 
                       onClick={() => setShowAnalysis(!showAnalysis)}
-                      className="group w-full flex items-center justify-between p-4 bg-white border border-neutral-200 rounded-2xl hover:border-brand-primary/30 transition-all shadow-sm"
+                      className="group w-full flex items-center justify-between px-3 py-2 bg-neutral-50 border border-neutral-200/60 rounded-xl hover:bg-white hover:border-brand-primary/30 transition-all shadow-sm mb-0"
                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-brand-secondary/20 text-brand-secondary p-2 rounded-lg group-hover:bg-brand-secondary group-hover:text-white transition-colors">
-                           <HelpCircle className="w-5 h-5" />
+                      <div className="flex items-center gap-2">
+                        <div className="bg-white text-brand-secondary p-1 rounded-full shadow-sm">
+                           <HelpCircle className="w-3 h-3" />
                         </div>
-                        <span className="font-semibold text-neutral-700">Want to know why?</span>
+                        <span className="text-xs font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors">Why did it win?</span>
                       </div>
-                      {showAnalysis ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
+                      {showAnalysis ? <ChevronUp className="w-3.5 h-3.5 text-neutral-400" /> : <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />}
                    </button>
 
                    {/* Dropdown Content - Technical Metrics */}
-                   <div className={`grid transition-all duration-300 ease-in-out ${showAnalysis ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'}`}>
+                   <div className={`grid transition-all duration-300 ease-in-out ${showAnalysis ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}>
                       <div className="overflow-hidden">
                           {/* Deep Insights */}
-                          <div className="bg-brand-surface/80 rounded-2xl p-5 mb-4 border border-neutral-200/50 space-y-4">
+                          <div className="bg-brand-surface/80 rounded-2xl p-4 mb-2 border border-neutral-200/50 space-y-3">
                               <div className="flex justify-between items-center border-b border-neutral-200/50 pb-2">
                                 <div className="flex items-center gap-2">
-                                  <ShieldCheck className="w-4 h-4 text-brand-secondary" />
+                                  <ShieldCheck className="w-3.5 h-3.5 text-brand-secondary" />
                                   <span className="text-xs font-bold text-neutral-600">Safety Advantage</span>
                                 </div>
-                                <span className="font-mono font-bold text-brand-accent text-sm">+{safetyPercentage}%</span>
+                                <span className="font-mono font-bold text-brand-accent text-xs">+{safetyPercentage}%</span>
                               </div>
                               
                               <div className="flex justify-between items-center pb-1">
                                 <div className="flex items-center gap-2">
-                                  <AlertTriangle className="w-4 h-4 text-orange-400" />
+                                  <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
                                   <span className="text-xs font-bold text-neutral-600">Rating Inflation</span>
                                 </div>
-                                <span className="font-mono font-bold text-neutral-500 text-sm">-{inflation} ★</span>
+                                <span className="font-mono font-bold text-neutral-500 text-xs">-{inflation} ★</span>
                               </div>
 
-                              <div className="pt-2">
+                              <div className="pt-1">
                                 <div className="flex justify-between text-[9px] uppercase font-bold text-neutral-400 mb-1">
                                     <span>Win Probability</span>
                                     <span>{winStrength > 80 ? 'Decisive' : (winStrength > 40 ? 'Strong' : 'Marginal')}</span>
                                 </div>
-                                <div className="h-2 bg-neutral-200 rounded-full overflow-hidden w-full relative">
+                                <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden w-full relative">
                                     <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'linear-gradient(45deg,rgba(0,0,0,0.1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,0.1) 50%,rgba(0,0,0,0.1) 75%,transparent 75%,transparent)', backgroundSize: '8px 8px'}}></div>
                                     <div 
                                       className={`h-full transition-all duration-1000 ease-out ${winner.id === 'A' ? 'bg-brand-primary' : 'bg-brand-accent'}`} 
@@ -250,13 +248,13 @@ const App: React.FC = () => {
                           </div>
 
                           {/* Stats Tiles */}
-                          <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-white/50 p-3 rounded-xl border border-white/60 group relative cursor-help">
+                          <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-white/50 p-2.5 rounded-xl border border-white/60 group relative cursor-help">
                                 <div className="flex items-center gap-1 mb-1">
-                                    <div className="text-[10px] uppercase font-bold text-neutral-400">Confidence</div>
+                                    <div className="text-[9px] uppercase font-bold text-neutral-400">Confidence</div>
                                     <HelpCircle className="w-3 h-3 text-neutral-300 group-hover:text-brand-primary transition-colors" />
                                 </div>
-                                <div className="text-lg font-mono font-semibold text-neutral-900">
+                                <div className="text-sm font-mono font-semibold text-neutral-900">
                                   {((winner.id === 'A' ? resultA.lowerBound : resultB.lowerBound) * 100).toFixed(0)}%
                                 </div>
                                 <div className="absolute bottom-full left-0 mb-2 w-48 bg-neutral-800 text-white text-[10px] p-2 rounded-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none z-20 shadow-xl">
@@ -265,12 +263,12 @@ const App: React.FC = () => {
                                 </div>
                               </div>
 
-                              <div className="bg-white/50 p-3 rounded-xl border border-white/60 group relative cursor-help">
+                              <div className="bg-white/50 p-2.5 rounded-xl border border-white/60 group relative cursor-help">
                                 <div className="flex items-center gap-1 mb-1">
-                                    <div className="text-[10px] uppercase font-bold text-neutral-400">True Score</div>
+                                    <div className="text-[9px] uppercase font-bold text-neutral-400">True Score</div>
                                     <TrendingUp className="w-3 h-3 text-neutral-300 group-hover:text-brand-primary transition-colors" />
                                 </div>
-                                <div className="text-lg font-mono font-semibold text-neutral-900">
+                                <div className="text-sm font-mono font-semibold text-neutral-900">
                                   {(winner.id === 'A' ? resultA.adjustedStars : resultB.adjustedStars).toFixed(2)}
                                 </div>
                                 <div className="absolute bottom-full right-0 mb-2 w-48 bg-neutral-800 text-white text-[10px] p-2 rounded-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none z-20 shadow-xl">
