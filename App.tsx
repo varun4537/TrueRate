@@ -1,13 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import ProductCard from './components/ProductCard';
 import ComparisonChart from './components/ComparisonChart';
 import Explanation from './components/Explanation';
 import { ProductData, WilsonResult } from './types';
 import { calculateWilsonScore } from './utils/wilson';
-import { Trophy, Scale } from 'lucide-react';
+import { Trophy, Scale, ShieldCheck, AlertTriangle, ChevronDown, ChevronUp, HelpCircle, TrendingUp } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeMobileTab, setActiveMobileTab] = useState<'A' | 'B'>('A');
+  const [isCalculated, setIsCalculated] = useState(false);
+  const [isVerdictInView, setIsVerdictInView] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const verdictRef = useRef<HTMLDivElement>(null);
 
   const [productA, setProductA] = useState<ProductData>({
     id: 'A',
@@ -25,6 +29,11 @@ const App: React.FC = () => {
     reviewCount: 162,
   });
 
+  // Validation Check
+  const isValidA = productA.rating >= 0 && productA.rating <= productA.maxRating;
+  const isValidB = productB.rating >= 0 && productB.rating <= productB.maxRating;
+  const isAllValid = isValidA && isValidB;
+
   const resultA: WilsonResult = useMemo(() => 
     calculateWilsonScore(productA.rating, productA.maxRating, productA.reviewCount), 
   [productA]);
@@ -33,149 +42,303 @@ const App: React.FC = () => {
     calculateWilsonScore(productB.rating, productB.maxRating, productB.reviewCount), 
   [productB]);
 
-  const winner = resultA.lowerBound > resultB.lowerBound ? productA : (resultB.lowerBound > resultA.lowerBound ? productB : null);
+  const winner = isAllValid 
+    ? (resultA.lowerBound > resultB.lowerBound ? productA : (resultB.lowerBound > resultA.lowerBound ? productB : null))
+    : null;
+    
   const winMargin = Math.abs(resultA.lowerBound - resultB.lowerBound);
   const isCloseCall = winMargin < 0.05 && winMargin > 0;
 
+  // Signal Effect: Briefly flash when results change/become valid
+  useEffect(() => {
+    if (isAllValid) {
+      setIsCalculated(true);
+      const timer = setTimeout(() => setIsCalculated(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [productA, productB, isAllValid]);
+
+  // Observer for Floating Button
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVerdictInView(entry.isIntersecting);
+      },
+      { threshold: 0.2 }
+    );
+
+    if (verdictRef.current) {
+      observer.observe(verdictRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToVerdict = () => {
+    verdictRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Verdict Insights Logic
+  const winnerResult = winner?.id === 'A' ? resultA : resultB;
+  const loserResult = winner?.id === 'A' ? resultB : resultA;
+  const safetyPercentage = winner ? ((winnerResult.lowerBound - loserResult.lowerBound) * 100).toFixed(1) : '0';
+  const inflation = winner ? (winner.rating - winnerResult.adjustedStars).toFixed(2) : '0';
+  
+  // Calculate relative win strength for bar chart (0 to 100 scale)
+  const winStrength = Math.min(100, Math.max(10, winMargin * 500)); 
+
   return (
-    <div className="min-h-screen bg-neutral-100 p-6 md:p-12">
+    <div className="min-h-screen px-4 py-8 md:p-8 max-w-[1440px] mx-auto pb-24">
       
-      <div className="max-w-[1200px] mx-auto space-y-12">
-        
-        {/* Header */}
-        <header className="text-center space-y-6 pt-8">
-          <div className="inline-flex items-center justify-center p-4 bg-white rounded-full shadow-card ring-1 ring-neutral-300">
-            <Scale className="w-8 h-8 text-brand-primary" />
+      {/* Header - Compact */}
+      <header className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 md:mb-10">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center w-12 h-12 glass-panel rounded-2xl text-brand-primary shadow-sm">
+            <Scale className="w-6 h-6" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-5xl md:text-6xl font-bold text-brand-accent tracking-tight leading-[1.1]">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">
               TrueRate
             </h1>
-            <p className="text-neutral-700 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-normal">
-              Compare products fairly. We use the <strong className="text-brand-primary font-semibold">Wilson Score Interval</strong> to statistically balance ratings with review counts.
-            </p>
+            <p className="text-neutral-500 text-sm font-medium">Statistical Product Comparison</p>
           </div>
-        </header>
+        </div>
+        
+        {/* Mobile Toggle (Visible only on small screens) */}
+        <div className="lg:hidden w-full md:w-auto">
+          <div className="flex bg-neutral-200/50 p-1 rounded-full relative w-full md:w-64">
+            <button 
+              onClick={() => setActiveMobileTab('A')}
+              className={`flex-1 py-2 px-4 rounded-full text-sm font-semibold transition-all duration-200 z-10 ${
+                activeMobileTab === 'A' ? 'text-neutral-900 shadow-sm bg-white' : 'text-neutral-500 hover:text-neutral-700'
+              }`}
+            >
+              Product A
+            </button>
+            <button 
+              onClick={() => setActiveMobileTab('B')}
+              className={`flex-1 py-2 px-4 rounded-full text-sm font-semibold transition-all duration-200 z-10 ${
+                activeMobileTab === 'B' ? 'text-neutral-900 shadow-sm bg-white' : 'text-neutral-500 hover:text-neutral-700'
+              }`}
+            >
+              Product B
+            </button>
+          </div>
+        </div>
+      </header>
 
-        {/* Comparison Section */}
-        <div className="grid lg:grid-cols-12 gap-8 items-start">
+      {/* Main Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        {/* Product A Column (Hidden on mobile if B selected) */}
+        <div className={`lg:block ${activeMobileTab === 'A' ? 'block' : 'hidden'}`}>
+          <ProductCard 
+            product={productA} 
+            onChange={setProductA} 
+            color="bg-brand-primary"
+            labelColor="text-brand-primary"
+          />
+        </div>
+
+        {/* Product B Column (Hidden on mobile if A selected) */}
+        <div className={`lg:block ${activeMobileTab === 'B' ? 'block' : 'hidden'}`}>
+          <ProductCard 
+            product={productB} 
+            onChange={setProductB} 
+            color="bg-brand-accent"
+            labelColor="text-brand-accent"
+          />
+        </div>
+
+        {/* Analytics Column - Sticks to top on desktop */}
+        <div 
+          ref={verdictRef}
+          id="verdict-section" 
+          className="lg:col-span-1 space-y-6 lg:sticky lg:top-8 scroll-mt-8"
+        >
           
-          {/* Inputs Section */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Mobile Tab Toggle */}
-            <div className="flex lg:hidden bg-white p-1 rounded-xl shadow-sm border border-neutral-300">
-              <button 
-                onClick={() => setActiveMobileTab('A')}
-                className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
-                  activeMobileTab === 'A' 
-                    ? 'bg-brand-primary text-white shadow-sm' 
-                    : 'text-neutral-500 hover:bg-neutral-100'
-                }`}
-              >
-                Product A
-              </button>
-              <button 
-                onClick={() => setActiveMobileTab('B')}
-                className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
-                  activeMobileTab === 'B' 
-                    ? 'bg-brand-accent text-white shadow-sm' 
-                    : 'text-neutral-500 hover:bg-neutral-100'
-                }`}
-              >
-                Product B
-              </button>
-            </div>
+          {/* Verdict Card */}
+          <div className={`glass-panel rounded-3xl p-6 shadow-floating relative overflow-visible group transition-all duration-500 ${isCalculated ? 'ring-2 ring-brand-secondary/50 scale-[1.01]' : ''}`}>
+             
+             {/* Dynamic Status Bar */}
+             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary to-brand-accent rounded-t-3xl opacity-0 transition-opacity duration-300" style={{ opacity: isCalculated ? 1 : 0 }}></div>
 
-            {/* Product Cards Container */}
-            <div className="space-y-6">
-              {/* Desktop: Show Both. Mobile: Show Active Only */}
-              <div className={`${activeMobileTab === 'A' ? 'block' : 'hidden'} lg:block`}>
-                <ProductCard 
-                  product={productA} 
-                  onChange={setProductA} 
-                  color="border-brand-primary"
-                  labelColor="text-brand-primary"
-                />
-              </div>
-
-              {/* VS Separator (Desktop Only) */}
-              <div className="hidden lg:flex justify-center items-center">
-                 <span className="bg-neutral-300 text-neutral-700 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest shadow-sm">VS</span>
-              </div>
-
-              <div className={`${activeMobileTab === 'B' ? 'block' : 'hidden'} lg:block`}>
-                <ProductCard 
-                  product={productB} 
-                  onChange={setProductB} 
-                  color="border-brand-accent"
-                  labelColor="text-brand-accent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Results & Chart */}
-          <div className="lg:col-span-7 space-y-6 flex flex-col">
-            
-            {/* Verdict Card */}
-            <div className="bg-white rounded-xl p-8 border border-neutral-300 shadow-card relative overflow-hidden group">
-               {winner ? (
-                 <>
-                    <div className="absolute -top-6 -right-6 p-8 opacity-[0.03] pointer-events-none transform group-hover:scale-110 transition-transform duration-700">
-                       <Trophy size={300} className="text-brand-accent" />
-                    </div>
-                    <div className="relative z-10">
-                      <h2 className="text-neutral-500 font-medium uppercase tracking-widest text-sm mb-3">Statistical Verdict</h2>
-                      <div className="flex flex-wrap items-center gap-4 mb-6">
-                        <div className={`p-3 rounded-full ${winner.id === 'A' ? 'bg-[#FFF0F3] text-brand-primary' : 'bg-[#EDF0F2] text-brand-accent'}`}>
+             {isAllValid ? (
+               winner ? (
+                 <div className="relative z-10 flex flex-col h-full">
+                   {/* Header */}
+                   <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold tracking-wider text-neutral-400 uppercase">Analysis Verdict</span>
+                        <div className="h-px w-8 bg-neutral-200"></div>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide transition-colors duration-500 ${isCalculated ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
+                        {isCalculated ? 'Live Data' : 'Cached'}
+                      </span>
+                   </div>
+                   
+                   {/* Winner Header - Simplified */}
+                   <div className="flex flex-col mb-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${winner.id === 'A' ? 'bg-brand-primary text-white' : 'bg-brand-accent text-white'}`}>
+                           Winner
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className={`shrink-0 p-3 rounded-2xl shadow-sm transition-transform duration-500 ${isCalculated ? 'scale-110 rotate-3' : ''} ${winner.id === 'A' ? 'bg-brand-primary text-white' : 'bg-brand-accent text-white'}`}>
                            <Trophy className="w-8 h-8" />
                         </div>
-                        <span className="text-3xl md:text-4xl font-bold text-brand-accent">
-                          {winner.name || `Product ${winner.id}`} Wins 
-                          {isCloseCall && <span className="text-xl text-neutral-500 font-normal ml-2">(Barely)</span>}
-                        </span>
+                        <h2 className="text-3xl font-bold text-neutral-900 leading-none truncate">
+                          {winner.name || `Product ${winner.id}`}
+                        </h2>
                       </div>
-                      
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="bg-neutral-100 p-5 rounded-xl border border-neutral-300">
-                           <div className="text-xs text-neutral-500 uppercase font-semibold mb-1">Confidence Score</div>
-                           <div className="text-2xl font-mono font-medium text-brand-secondary">
-                             {((winner.id === 'A' ? resultA.lowerBound : resultB.lowerBound) * 100).toFixed(1)}%
-                           </div>
-                        </div>
-                         <div className="bg-neutral-100 p-5 rounded-xl border border-neutral-300">
-                           <div className="text-xs text-neutral-500 uppercase font-semibold mb-1">Adjusted Rating</div>
-                           <div className="text-2xl font-mono font-medium text-brand-accent">
-                             {(winner.id === 'A' ? resultA.adjustedStars : resultB.adjustedStars).toFixed(2)}
-                             <span className="text-base text-neutral-500 ml-1">/ {winner.maxRating}</span>
-                           </div>
-                        </div>
-                      </div>
-                    </div>
-                 </>
-               ) : (
-                 <div className="flex items-center justify-center h-48 text-neutral-500 italic">
-                   Enter product data to see the winner
-                 </div>
-               )}
-            </div>
+                   </div>
 
-            {/* Visualization */}
+                   {/* Simple Summary */}
+                   <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
+                     Based on the rating consistency and volume of reviews, <strong>{winner.name}</strong> is the statistically safer choice.
+                   </p>
+
+                   {/* Analysis Toggle */}
+                   <button 
+                      onClick={() => setShowAnalysis(!showAnalysis)}
+                      className="group w-full flex items-center justify-between p-4 bg-white border border-neutral-200 rounded-2xl hover:border-brand-primary/30 transition-all shadow-sm"
+                   >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-brand-secondary/20 text-brand-secondary p-2 rounded-lg group-hover:bg-brand-secondary group-hover:text-white transition-colors">
+                           <HelpCircle className="w-5 h-5" />
+                        </div>
+                        <span className="font-semibold text-neutral-700">Want to know why?</span>
+                      </div>
+                      {showAnalysis ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
+                   </button>
+
+                   {/* Dropdown Content - Technical Metrics */}
+                   <div className={`grid transition-all duration-300 ease-in-out ${showAnalysis ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'}`}>
+                      <div className="overflow-hidden">
+                          {/* Deep Insights */}
+                          <div className="bg-brand-surface/80 rounded-2xl p-5 mb-4 border border-neutral-200/50 space-y-4">
+                              <div className="flex justify-between items-center border-b border-neutral-200/50 pb-2">
+                                <div className="flex items-center gap-2">
+                                  <ShieldCheck className="w-4 h-4 text-brand-secondary" />
+                                  <span className="text-xs font-bold text-neutral-600">Safety Advantage</span>
+                                </div>
+                                <span className="font-mono font-bold text-brand-accent text-sm">+{safetyPercentage}%</span>
+                              </div>
+                              
+                              <div className="flex justify-between items-center pb-1">
+                                <div className="flex items-center gap-2">
+                                  <AlertTriangle className="w-4 h-4 text-orange-400" />
+                                  <span className="text-xs font-bold text-neutral-600">Rating Inflation</span>
+                                </div>
+                                <span className="font-mono font-bold text-neutral-500 text-sm">-{inflation} ★</span>
+                              </div>
+
+                              <div className="pt-2">
+                                <div className="flex justify-between text-[9px] uppercase font-bold text-neutral-400 mb-1">
+                                    <span>Win Probability</span>
+                                    <span>{winStrength > 80 ? 'Decisive' : (winStrength > 40 ? 'Strong' : 'Marginal')}</span>
+                                </div>
+                                <div className="h-2 bg-neutral-200 rounded-full overflow-hidden w-full relative">
+                                    <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'linear-gradient(45deg,rgba(0,0,0,0.1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,0.1) 50%,rgba(0,0,0,0.1) 75%,transparent 75%,transparent)', backgroundSize: '8px 8px'}}></div>
+                                    <div 
+                                      className={`h-full transition-all duration-1000 ease-out ${winner.id === 'A' ? 'bg-brand-primary' : 'bg-brand-accent'}`} 
+                                      style={{ width: `${winStrength}%` }}
+                                    ></div>
+                                </div>
+                              </div>
+                          </div>
+
+                          {/* Stats Tiles */}
+                          <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white/50 p-3 rounded-xl border border-white/60 group relative cursor-help">
+                                <div className="flex items-center gap-1 mb-1">
+                                    <div className="text-[10px] uppercase font-bold text-neutral-400">Confidence</div>
+                                    <HelpCircle className="w-3 h-3 text-neutral-300 group-hover:text-brand-primary transition-colors" />
+                                </div>
+                                <div className="text-lg font-mono font-semibold text-neutral-900">
+                                  {((winner.id === 'A' ? resultA.lowerBound : resultB.lowerBound) * 100).toFixed(0)}%
+                                </div>
+                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-neutral-800 text-white text-[10px] p-2 rounded-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none z-20 shadow-xl">
+                                    We are 95% statistically certain the true quality is at least this high.
+                                    <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-neutral-800"></div>
+                                </div>
+                              </div>
+
+                              <div className="bg-white/50 p-3 rounded-xl border border-white/60 group relative cursor-help">
+                                <div className="flex items-center gap-1 mb-1">
+                                    <div className="text-[10px] uppercase font-bold text-neutral-400">True Score</div>
+                                    <TrendingUp className="w-3 h-3 text-neutral-300 group-hover:text-brand-primary transition-colors" />
+                                </div>
+                                <div className="text-lg font-mono font-semibold text-neutral-900">
+                                  {(winner.id === 'A' ? resultA.adjustedStars : resultB.adjustedStars).toFixed(2)}
+                                </div>
+                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-neutral-800 text-white text-[10px] p-2 rounded-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none z-20 shadow-xl">
+                                    The lower bound of the Wilson Score Interval. A conservative estimate of actual quality.
+                                    <div className="absolute top-full right-4 -mt-1 border-4 border-transparent border-t-neutral-800"></div>
+                                </div>
+                              </div>
+                          </div>
+                      </div>
+                   </div>
+
+                 </div>
+               ) : (
+                 <div className="flex flex-col items-center justify-center py-12 text-neutral-400 text-sm">
+                   <Scale className="w-8 h-8 mb-2 opacity-50" />
+                   Tie game
+                 </div>
+               )
+             ) : (
+               <div className="flex flex-col items-center justify-center py-16 text-state-error text-center px-4">
+                 <AlertTriangle className="w-10 h-10 mb-3 text-red-400" />
+                 <h3 className="text-neutral-900 font-bold mb-1">Invalid Configuration</h3>
+                 <p className="text-xs text-neutral-500">Please correct the rating values to proceed.</p>
+               </div>
+             )}
+          </div>
+
+          {/* Chart */}
+          {isAllValid && (
             <ComparisonChart 
               productA={productA} 
               productB={productB}
               resultA={resultA}
               resultB={resultB}
             />
+          )}
+
+          {/* Educational Note */}
+          <div className="hidden lg:block bg-brand-secondary/10 rounded-2xl p-4 border border-brand-secondary/20">
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              <strong className="text-brand-accent">Why this matters:</strong> TrueRate penalizes uncertainty. A high rating with few reviews is risky.
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* Educational Footer */}
+      {/* Mobile Floating Action Button - Smart Visibility */}
+      {isAllValid && (
+        <div 
+          className={`lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${
+            isVerdictInView ? 'opacity-0 translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'
+          }`}
+        >
+          <button 
+            onClick={scrollToVerdict}
+            className="flex items-center gap-2 bg-neutral-900 text-white px-6 py-3 rounded-full shadow-floating font-bold text-sm animate-bounce hover:animate-none"
+            style={{ animationDuration: '2s' }} // Slower bounce
+          >
+            View Verdict <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Footer Content */}
+      <div className="mt-16">
         <Explanation />
-        
-        <footer className="text-center text-neutral-500 text-sm py-8">
-          TrueRate &copy; {new Date().getFullYear()} &middot; Designed with DesignAcademy Theme
+        <footer className="text-center text-neutral-400 text-xs py-12 font-medium">
+          TrueRate &copy; {new Date().getFullYear()} &middot; Scientific Ranking Tool
         </footer>
       </div>
     </div>

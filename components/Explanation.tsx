@@ -3,12 +3,12 @@ import { Info, Calculator, CheckCircle2, XCircle } from 'lucide-react';
 
 const Explanation: React.FC = () => {
   return (
-    <div className="space-y-10 pt-8 border-t border-neutral-300">
+    <div className="space-y-12 pt-12 border-t border-neutral-300/50">
       
       {/* Quick Summary */}
-      <div className="bg-white border border-neutral-300 rounded-xl p-8 shadow-sm flex flex-col md:flex-row gap-8">
+      <div className="glass-panel rounded-3xl p-8 shadow-floating flex flex-col md:flex-row gap-8">
         <div className="shrink-0">
-          <div className="p-4 bg-brand-secondary/20 rounded-full text-brand-secondary inline-block">
+          <div className="p-4 bg-brand-secondary/20 rounded-2xl text-brand-secondary inline-block backdrop-blur-sm border border-brand-secondary/20">
             <Info className="w-8 h-8" />
           </div>
         </div>
@@ -17,7 +17,7 @@ const Explanation: React.FC = () => {
           <p className="text-neutral-700 leading-relaxed text-lg">
             Comparing products by average rating alone is misleading. A 5-star product with 1 review is statistically unreliable compared to a 4.8-star product with 100 reviews.
           </p>
-          <div className="bg-neutral-100 p-6 rounded-lg border-l-4 border-brand-primary">
+          <div className="bg-white/50 p-6 rounded-2xl border-l-4 border-brand-primary backdrop-blur-sm">
              <p className="text-lg italic text-neutral-700 font-serif">
               "We need a way to balance the proportion of positive ratings with the uncertainty of a small sample size."
              </p>
@@ -39,9 +39,9 @@ const Explanation: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-8">
           
           {/* Wrong Way */}
-          <div className="bg-white border border-state-error/20 rounded-xl p-8 flex flex-col shadow-sm">
+          <div className="glass-panel border-state-error/30 rounded-3xl p-8 flex flex-col shadow-lg">
              <div className="flex items-center gap-3 mb-6">
-               <div className="p-2 bg-state-error/10 rounded-full text-state-error">
+               <div className="p-2 bg-state-error/10 rounded-full text-state-error backdrop-blur-sm">
                  <XCircle size={24} />
                </div>
                <h4 className="text-lg font-bold text-state-error">
@@ -56,7 +56,7 @@ const Explanation: React.FC = () => {
                 <p className="text-neutral-500 text-sm">
                   This is just the simple average.
                 </p>
-                <div className="bg-neutral-100 p-5 rounded-lg text-sm space-y-3 font-mono text-neutral-700 border border-neutral-200">
+                <div className="bg-white/50 p-5 rounded-2xl text-sm space-y-3 font-mono text-neutral-700 border border-white/50">
                    <div className="flex justify-between">
                      <span>Item A (1 pos, 0 neg)</span>
                      <span className="text-state-error font-bold">Score: 100%</span>
@@ -66,16 +66,16 @@ const Explanation: React.FC = () => {
                      <span className="text-state-success font-bold">Score: 99%</span>
                    </div>
                 </div>
-                <p className="text-sm text-state-error italic">
+                <p className="text-sm text-state-error italic font-medium">
                    Result: The algorithm wrongly bets on Item A, despite zero data density.
                 </p>
              </div>
           </div>
 
           {/* Right Way */}
-          <div className="bg-white border border-brand-secondary/40 rounded-xl p-8 flex flex-col shadow-sm">
+          <div className="glass-panel border-brand-secondary/40 rounded-3xl p-8 flex flex-col shadow-lg">
              <div className="flex items-center gap-3 mb-6">
-               <div className="p-2 bg-brand-secondary/20 rounded-full text-brand-secondary">
+               <div className="p-2 bg-brand-secondary/20 rounded-full text-brand-secondary backdrop-blur-sm">
                  <CheckCircle2 size={24} />
                </div>
                <h4 className="text-lg font-bold text-state-success">
@@ -90,7 +90,7 @@ const Explanation: React.FC = () => {
                  <p className="text-neutral-500 text-sm">
                   Calculates what the rating <em>probably</em> is, at minimum.
                 </p>
-                <div className="bg-neutral-100 p-5 rounded-lg text-sm space-y-3 font-mono text-neutral-700 border border-neutral-200">
+                <div className="bg-white/50 p-5 rounded-2xl text-sm space-y-3 font-mono text-neutral-700 border border-white/50">
                    <div className="flex justify-between">
                      <span>Item A (1 review)</span>
                      <span className="text-state-error font-bold">Lower Bound: ~20%</span>
@@ -100,7 +100,7 @@ const Explanation: React.FC = () => {
                      <span className="text-state-success font-bold">Lower Bound: ~94%</span>
                    </div>
                 </div>
-                 <p className="text-sm text-state-success italic">
+                 <p className="text-sm text-state-success italic font-medium">
                    Result: Item B is correctly identified as the better bet.
                 </p>
              </div>
@@ -108,7 +108,7 @@ const Explanation: React.FC = () => {
 
         </div>
         
-        <div className="mt-8 p-6 rounded-xl bg-neutral-900 text-neutral-300 shadow-lg">
+        <div className="mt-8 p-8 rounded-3xl bg-neutral-900/90 backdrop-blur-md text-neutral-300 shadow-floating border border-white/10">
            <h5 className="text-white font-bold mb-3 flex items-center gap-2 text-lg">
              <Calculator className="w-5 h-5 text-brand-primary"/> How this tool calculates it
            </h5>

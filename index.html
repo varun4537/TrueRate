@@ -8,7 +8,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,33 +20,32 @@
                 primary: '#E75A7C',   // Pinkish Red
                 secondary: '#BBC7A4', // Sage Green
                 accent: '#2C363F',    // Dark Blue/Grey
+                surface: '#F8FAFC',
               },
               neutral: {
-                900: '#2C363F',
-                700: '#5F6770',
-                500: '#9AA0A6',
-                300: '#D6DBD2',
-                100: '#F2F5EA',
+                900: '#0F172A',
+                700: '#334155',
+                500: '#64748B',
+                400: '#94A3B8',
+                300: '#CBD5E1',
+                200: '#E2E8F0',
+                100: '#F1F5F9',
                 0: '#FFFFFF',
               },
-              state: {
-                success: '#BBC7A4',
-                warning: '#F2C94C',
-                error: '#E75A7C',
-                info: '#6B9AC4',
-              }
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               mono: ['JetBrains Mono', 'monospace'],
             },
             borderRadius: {
-              'xl': '20px',    // lg from design.json
-              '2xl': '32px',   // xl from design.json
+              'xl': '16px',
+              '2xl': '24px',
+              '3xl': '32px',
             },
             boxShadow: {
-              'card': '0 1px 2px rgba(44, 54, 63, 0.06)', // sm
-              'floating': '0 12px 32px rgba(44, 54, 63, 0.12)', // lg
+              'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+              'floating': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             }
           }
         }
@@ -64,6 +63,26 @@
       .no-spinner {
         -moz-appearance: textfield;
       }
+      
+      /* Refined Glassmorphism */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      
+      .glass-input {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.2s ease;
+      }
+      
+      .glass-input:focus {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: #E75A7C;
+        box-shadow: 0 0 0 2px rgba(231, 90, 124, 0.1);
+      }
     </style>
   <script type="importmap">
 {
@@ -78,7 +97,9 @@
 }
 </script>
 </head>
-  <body class="bg-[#F2F5EA] text-[#2C363F] font-sans antialiased min-h-screen">
+  <body class="bg-[#F8FAFC] text-neutral-900 font-sans antialiased min-h-screen selection:bg-brand-primary selection:text-white overflow-x-hidden">
+    <!-- Subtle Gradient Mesh Background -->
+    <div class="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#FFE5EC]/40 via-[#F1F5F9] to-[#E2E8F0]/50"></div>
     <div id="root"></div>
   </body>
 </html>

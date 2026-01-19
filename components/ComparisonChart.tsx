@@ -13,16 +13,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white border border-neutral-300 p-4 rounded-xl shadow-floating text-sm">
-        <p className="font-bold text-neutral-900 mb-2 text-base">{data.name}</p>
-        <p className="text-neutral-500 mb-1">
-          Nominal: <span className="text-neutral-900 font-mono">{data.rawRating.toFixed(2)}</span> / {data.max}
-        </p>
-        <p className="text-brand-primary">
-          True Score: <span className="font-bold font-mono">{data.adjusted.toFixed(2)}</span> / {data.max}
-        </p>
-        <div className="mt-2 pt-2 border-t border-neutral-200">
-           <p className="text-xs text-neutral-500 uppercase tracking-wide">Confidence: 95%</p>
+      <div className="bg-white/95 backdrop-blur-md border border-neutral-100 p-3 rounded-lg shadow-xl text-xs">
+        <p className="font-bold text-neutral-900 mb-1">{data.name}</p>
+        <div className="space-y-1">
+          <p className="text-neutral-500 flex justify-between gap-4">
+            <span>Nominal:</span> <span className="font-mono text-neutral-900">{data.rawRating}</span>
+          </p>
+          <p className="text-brand-primary flex justify-between gap-4">
+            <span>True Score:</span> <span className="font-bold font-mono">{data.adjusted.toFixed(2)}</span>
+          </p>
         </div>
       </div>
     );
@@ -34,88 +33,78 @@ const ComparisonChart: React.FC<ComparisonChartProps> = ({ productA, productB, r
   const data = [
     {
       id: 'A',
-      name: productA.name || 'Product A',
+      name: 'Prod A',
+      fullName: productA.name,
       rawRating: productA.rating,
       adjusted: resultA.adjustedStars,
       max: productA.maxRating,
-      fill: '#E75A7C', // Brand Primary
+      fill: '#E75A7C',
     },
     {
       id: 'B',
-      name: productB.name || 'Product B',
+      name: 'Prod B',
+      fullName: productB.name,
       rawRating: productB.rating,
       adjusted: resultB.adjustedStars,
       max: productB.maxRating,
-      fill: '#2C363F', // Brand Accent (Neutral 900)
+      fill: '#2C363F',
     }
   ];
 
-  // Determine winner for highlight
   const winnerId = resultA.lowerBound > resultB.lowerBound ? 'A' : (resultB.lowerBound > resultA.lowerBound ? 'B' : null);
 
   return (
-    <div className="w-full h-[450px] bg-white rounded-xl p-6 border border-neutral-300 shadow-card flex flex-col">
-      <h3 className="text-center text-neutral-700 font-semibold mb-6 text-lg">Quality Comparison</h3>
+    <div className="w-full h-[320px] glass-panel rounded-3xl p-5 shadow-sm flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-bold text-neutral-700">Visual Comparison</h3>
+        <div className="flex gap-2 text-[10px] font-bold text-neutral-400 uppercase">
+          <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-neutral-200"></div> Avg</span>
+          <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-brand-primary"></div> True</span>
+        </div>
+      </div>
+      
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          barGap={12}
+          margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
+          barGap={4}
         >
           <XAxis 
             dataKey="name" 
-            tick={{ fill: '#5F6770', fontSize: 14 }} 
-            axisLine={{ stroke: '#D6DBD2' }}
+            tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }} 
+            axisLine={false}
             tickLine={false}
             dy={10}
           />
           <YAxis 
-            domain={[0, (dataMax: number) => Math.ceil(dataMax)]} 
-            tick={{ fill: '#9AA0A6', fontSize: 12, fontFamily: 'monospace' }}
+            tick={{ fill: '#CBD5E1', fontSize: 10, fontFamily: 'monospace' }}
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{fill: '#F2F5EA'}} />
+          <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(0,0,0,0.02)', radius: 8}} />
           
-          {/* Raw Rating Ghost Bar */}
-          <Bar dataKey="rawRating" name="Nominal Average" fill="#D6DBD2" radius={[6, 6, 0, 0]} barSize={64}>
-            <LabelList dataKey="rawRating" position="top" fill="#9AA0A6" fontSize={12} formatter={(val: number) => `Avg: ${val}`} />
-          </Bar>
+          <Bar dataKey="rawRating" fill="#E2E8F0" radius={[4, 4, 4, 4]} barSize={32} />
 
-          {/* Wilson Score Bar */}
-          <Bar dataKey="adjusted" name="True Score" radius={[6, 6, 0, 0]} barSize={64}>
+          <Bar dataKey="adjusted" radius={[4, 4, 4, 4]} barSize={32}>
             {data.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
                 fill={entry.fill} 
-                opacity={winnerId ? (entry.id === winnerId ? 1 : 0.3) : 1}
+                opacity={winnerId ? (entry.id === winnerId ? 1 : 0.4) : 1}
               />
             ))}
              <LabelList 
                 dataKey="adjusted" 
-                position="insideTop" 
-                fill="#fff" 
+                position="top" 
+                fill="#334155" 
                 fontWeight="600"
                 fontFamily="monospace"
-                fontSize={14} 
+                fontSize={11} 
                 formatter={(val: number) => val.toFixed(2)} 
-                offset={10}
              />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      
-      <div className="flex justify-center gap-8 text-xs mt-4 text-neutral-500 font-medium">
-         <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-neutral-300 rounded-sm"></div> Nominal Average
-         </div>
-         <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-brand-primary rounded-sm"></div> True Score (A)
-         </div>
-         <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-brand-accent rounded-sm"></div> True Score (B)
-         </div>
-      </div>
     </div>
   );
 };

@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
 import { ProductData } from '../types';
 import { parseProductData } from '../services/geminiService';
-import { Sparkles, Loader2, AlertCircle, Link } from 'lucide-react';
+import { Sparkles, Loader2, Link, Globe, AlertCircle } from 'lucide-react';
 
 interface ProductCardProps {
   product: ProductData;
   onChange: (data: ProductData) => void;
-  color: string;     // Tailwind border class e.g., 'border-brand-primary'
-  labelColor: string; // Tailwind text class e.g., 'text-brand-primary'
+  color: string;     // Tailwind bg class for identifier
+  labelColor: string; // Tailwind text class
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onChange, color, labelColor }) => {
   const [inputText, setInputText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  
   const handleInputChange = (field: keyof ProductData, value: string | number) => {
     onChange({ ...product, [field]: value });
   };
 
   const handleSmartExtract = async () => {
     if (!inputText.trim()) return;
-    
     setIsExtracting(true);
-    setError(null);
     try {
       const result = await parseProductData(inputText);
       onChange({
@@ -33,107 +30,114 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onChange, color, lab
         reviewCount: result.reviewCount || 0,
         maxRating: result.maxRating || 5
       });
+      setInputText(''); // Clear on success
     } catch (err) {
-      setError("Could not extract data. Please enter manually.");
+      console.error(err);
     } finally {
       setIsExtracting(false);
     }
   };
 
+  const isRatingInvalid = product.rating > product.maxRating;
+  const isRatingNegative = product.rating < 0;
+
   return (
-    <div className={`bg-white rounded-xl p-6 shadow-card border border-neutral-300 relative overflow-hidden transition-shadow hover:shadow-md`}>
-      {/* Accent Top Border */}
-      <div className={`absolute top-0 left-0 right-0 h-1.5 ${color.replace('border-', 'bg-')}`}></div>
-
-      <div className="flex justify-between items-center mb-6 mt-2">
-        <h2 className={`text-xl font-bold ${labelColor} flex items-center gap-2`}>
-          Product {product.id}
-        </h2>
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-500 uppercase tracking-wide">
-          Input
-        </span>
+    <div className="glass-panel rounded-3xl p-5 shadow-sm transition-all hover:shadow-md flex flex-col h-full relative">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+           <div className={`w-2 h-8 rounded-full ${color}`}></div>
+           <input 
+             type="text" 
+             value={product.name}
+             onChange={(e) => handleInputChange('name', e.target.value)}
+             className="text-lg font-bold text-neutral-900 bg-transparent border-none focus:ring-0 p-0 placeholder:text-neutral-300 w-full"
+             placeholder={`Product ${product.id} Name`}
+           />
+        </div>
+        <div className="text-xs font-bold text-neutral-400 uppercase tracking-wide bg-neutral-100 px-2 py-1 rounded-md">
+          {product.id}
+        </div>
       </div>
 
-      {/* AI Extraction Section */}
-      <div className="bg-neutral-100/50 p-4 rounded-xl border border-neutral-300 mb-6">
-        <label className="text-xs text-neutral-500 uppercase font-bold tracking-wider mb-3 block flex items-center gap-2">
-           <Sparkles className="w-3 h-3 text-brand-primary" /> AI Auto-Fill
-        </label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Link className="h-4 w-4 text-neutral-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Paste product URL..."
-              className="w-full pl-9 bg-white border border-neutral-300 rounded-lg px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-            />
+      {/* Compact AI Input */}
+      <div className="mb-6 relative group">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Globe className="h-4 w-4 text-neutral-400 group-focus-within:text-brand-primary transition-colors" />
+        </div>
+        <input
+          type="text"
+          placeholder="Paste URL to auto-fill..."
+          className="w-full pl-9 pr-10 glass-input rounded-xl py-2.5 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSmartExtract()}
+        />
+        <button
+          onClick={handleSmartExtract}
+          disabled={!inputText || isExtracting}
+          className="absolute right-1.5 top-1.5 bottom-1.5 bg-white shadow-sm hover:shadow-md border border-neutral-100 text-neutral-700 hover:text-brand-primary rounded-lg px-2 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Extract data"
+        >
+          {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        
+        {/* Rating Group */}
+        <div className={`col-span-2 rounded-2xl p-4 border transition-colors duration-300 ${isRatingInvalid || isRatingNegative ? 'bg-red-50 border-red-200' : 'bg-white/50 border-white/60'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <label className={`text-xs font-semibold uppercase ${isRatingInvalid || isRatingNegative ? 'text-red-500' : 'text-neutral-500'}`}>
+              Average Rating
+            </label>
+            <span className="text-[10px] text-neutral-400 bg-white px-1.5 py-0.5 rounded border border-neutral-100">STARS</span>
           </div>
-          <button
-            onClick={handleSmartExtract}
-            disabled={isExtracting || !inputText}
-            className="bg-brand-primary hover:bg-[#D94B6C] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-semibold"
-            title="Extract data using AI"
-          >
-            {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Fill"}
-          </button>
-        </div>
-        {error && <p className="text-state-error text-xs mt-2 flex items-center gap-1 font-medium"><AlertCircle className="w-3 h-3"/> {error}</p>}
-      </div>
-
-      {/* Manual Input Fields */}
-      <div className="space-y-5">
-        <div>
-          <label className="block text-neutral-700 font-medium text-sm mb-1.5">Product Name</label>
-          <input
-            type="text"
-            value={product.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            className="w-full bg-white border border-neutral-300 rounded-lg px-4 py-2.5 text-neutral-900 focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all shadow-sm"
-            placeholder={`e.g. Super Widget 3000`}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-neutral-700 font-medium text-sm mb-1.5">Rating</label>
+          <div className="flex items-end gap-2 relative">
             <input
               type="number"
               step="0.1"
-              min="0"
-              max={product.maxRating}
               value={product.rating || ''}
               onChange={(e) => handleInputChange('rating', parseFloat(e.target.value))}
-              className="no-spinner w-full bg-white border border-neutral-300 rounded-lg px-4 py-2.5 text-neutral-900 font-mono focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all shadow-sm"
-              placeholder="4.5"
+              className={`no-spinner text-3xl font-mono font-medium bg-transparent border-none p-0 focus:ring-0 w-24 placeholder:text-neutral-300 ${isRatingInvalid || isRatingNegative ? 'text-red-600' : 'text-neutral-900'}`}
+              placeholder="0.0"
             />
+            <div className="flex items-center text-neutral-400 mb-2 gap-1">
+               <span className="text-sm">/</span>
+               <input 
+                  type="number"
+                  value={product.maxRating}
+                  onChange={(e) => handleInputChange('maxRating', parseFloat(e.target.value))}
+                  className="no-spinner w-8 bg-transparent text-sm font-medium border-none p-0 focus:ring-0 text-neutral-500" 
+               />
+            </div>
           </div>
-          <div>
-            <label className="block text-neutral-700 font-medium text-sm mb-1.5">Max Scale</label>
-            <input
-              type="number"
-              min="1"
-              value={product.maxRating}
-              onChange={(e) => handleInputChange('maxRating', parseFloat(e.target.value))}
-              className="no-spinner w-full bg-white border border-neutral-300 rounded-lg px-4 py-2.5 text-neutral-900 font-mono focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all shadow-sm"
-            />
-          </div>
+          {(isRatingInvalid || isRatingNegative) && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-red-600 font-medium animate-pulse">
+              <AlertCircle className="w-3 h-3" />
+              {isRatingNegative ? 'Rating cannot be negative' : `Cannot exceed ${product.maxRating}`}
+            </div>
+          )}
         </div>
 
-        <div>
-          <label className="block text-neutral-700 font-medium text-sm mb-1.5">Total Reviews (n)</label>
+        {/* Review Count */}
+        <div className="col-span-2 bg-white/50 rounded-2xl p-4 border border-white/60">
+           <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-neutral-500 uppercase">Review Count</label>
+            <span className="text-[10px] text-neutral-400 bg-white px-1.5 py-0.5 rounded border border-neutral-100">TOTAL</span>
+          </div>
           <input
             type="number"
             min="0"
             value={product.reviewCount || ''}
             onChange={(e) => handleInputChange('reviewCount', parseInt(e.target.value))}
-            className="no-spinner w-full bg-white border border-neutral-300 rounded-lg px-4 py-2.5 text-neutral-900 font-mono focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all shadow-sm"
-            placeholder="100"
+            className="no-spinner w-full text-2xl font-mono font-medium text-neutral-900 bg-transparent border-none p-0 focus:ring-0 placeholder:text-neutral-300"
+            placeholder="0"
           />
         </div>
+
       </div>
     </div>
   );
